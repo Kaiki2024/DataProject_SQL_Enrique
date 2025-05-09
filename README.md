@@ -93,9 +93,9 @@ SELECT SUM("amount") AS "Total_Ingresos"
 FROM payment AS p;
 
 --pregunta 16: 
-SELECT "CustomerId" AS "ID_Cliente"
-FROM "Customer" AS c 
-ORDER BY "CustomerId" DESC
+SELECT "customer_id" AS "ID_Cliente"
+FROM "customer" AS c 
+ORDER BY "customer_id" DESC
 LIMIT 10;
 
 --pregunta 17:
@@ -159,7 +159,7 @@ WHERE "length" > (SELECT AVG("length") AS "Duración_media"
 					
 --pregunta 25:
 SELECT TO_CHAR ("rental_date",'YYYY_MM') AS "Mes_alquiler",
-		COUNT("rental_date") AS "Total_alquileres)"
+		COUNT("rental_date") AS "Total_alquileres"
 FROM rental AS r 
 GROUP BY "Mes_alquiler" 
 ORDER BY "Mes_alquiler";
@@ -201,7 +201,7 @@ ORDER BY "Total_copias" DESC;
 
 --pregunta 30:
 SELECT CONCAT("first_name",' ',"last_name") AS "Actor/Actriz",
-		COUNT(a."actor_id") AS "Películas"
+		COUNT(fa."film_id") AS "Películas"
 FROM actor AS a 
 INNER JOIN film_actor AS fa
 ON a."actor_id" = fa."actor_id"
@@ -221,7 +221,7 @@ ORDER BY "Actor/Actriz" ASC;
 SELECT CONCAT("first_name",' ',"last_name") AS "Nombre_Actores",
 		"title" AS "Película"
 FROM actor AS a 
-FULL JOIN film_actor AS fa 
+RIGHT JOIN film_actor AS fa 
 ON a."actor_id" = fa."actor_id"
 RIGHT JOIN film AS f 
 ON fa."film_id" = f."film_id";
@@ -244,7 +244,7 @@ SELECT SUM("amount") AS "Total_gastado",
 FROM payment AS p 
 INNER JOIN Customer AS c
 ON c."customer_id" = p."customer_id"
-GROUP BY "ID_cliente" 
+GROUP BY "ID_cliente","Nombre_Cliente"
 ORDER BY "Total_gastado" DESC
 LIMIT 5;
 
@@ -392,7 +392,7 @@ SELECT CONCAT(c."first_name",' ',c."last_name") AS "Nombre_cliente",
 FROM customer AS c 
 INNER JOIN payment AS p 
 ON c."customer_id" = p."customer_id"
-GROUP BY "ID_cliente" 
+GROUP BY "ID_cliente","Nombre_cliente" 
 ORDER BY "ID_cliente" ASC;
 
 --pregunta 52:
@@ -463,17 +463,16 @@ ORDER BY a."last_name" ASC;
 
 --pregunta 56:
 SELECT a."first_name" AS "Nombre",
-		a."last_name" AS "Apellido"
-FROM actor AS a 
-INNER JOIN film_actor AS fa 
-ON a."actor_id" = fa."actor_id"
-INNER JOIN film AS f 
-ON fa."film_id" = f."film_id"
-INNER JOIN film_category AS fc 
-ON f."film_id" = fc."film_id"
-INNER JOIN category AS c 
-ON fc."category_id" = c."category_id"
-WHERE c."name" <> 'Music'
+       a."last_name" AS "Apellido"
+FROM actor AS a
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM film_actor AS fa
+    INNER JOIN film AS f ON fa."film_id" = f."film_id"
+    INNER JOIN film_category AS fc ON f."film_id" = fc."film_id"
+    INNER JOIN category AS c ON fc."category_id" = c."category_id"
+    WHERE a."actor_id" = fa."actor_id" AND c."name" = 'Music'
+)
 GROUP BY a."first_name", a."last_name"
 ORDER BY a."last_name" ASC;
 
@@ -504,10 +503,10 @@ ORDER BY f."title" ASC;
 --pregunta 59:
 SELECT f."title" AS "Película"
 FROM film AS f 
-WHERE f."length" = (SELECT f."length"
+WHERE f."length" = (SELECT f."length" AS "Duración"
 					FROM film AS f
 					WHERE f."title" = 'DANCING FEVER')
-ORDER BY f."title" ASC
+ORDER BY f."title" ASC;
 
 --pregunta 60:
 SELECT c."first_name" AS "Nombre",
@@ -555,8 +554,8 @@ GROUP BY c."name";
 SELECT s."first_name" AS "Nombre",
 		s2."store_id" AS "Tiendas"
 FROM staff AS s 
-FULL JOIN store AS s2
-ON s."store_id" = s2."store_id"
+INNER JOIN store AS s2
+ON s."store_id" = s2."store_id";
 
 --pregunta 64:
 SELECT c."first_name" AS "Nombre",
